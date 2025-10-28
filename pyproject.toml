@@ -7,13 +7,14 @@ name = "nanobindgen"
 version = "0.1.0"
 description = "Automatically generate nanobind bindings."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 license = { file = "LICENSE" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "pytest>=8.4.2",
     "tree-sitter==0.21.3",
     "tree-sitter-cpp==0.22.3",
     "tree-sitter-jsdoc==0.21.0",

@@ -23,6 +23,7 @@ void bind_input(nb::module_ &m)
         .def_prop_ro_static("static_property", &Test::static_property, "Static property");
 
     nb::class_<Test2, Test>(m, "Test2")
+        .def(nb::new_(&Test2::make), "a"_a, "Modified constructor\n\nArgs:\n    a: p1\n\nReturns: nb::ref<Test2> ")
         .def_prop_rw("name", &Test2::get_name, &Test2::set_name, "Get the name object\n\nReturns: The name")
         .def_prop_ro("prop", &Test2::get_prop, "Read-only property")
         .def("__iter__", &Test2::iter, "Iterate through this list\n\nReturns: iterator", nb::keep_alive<0, 1>());

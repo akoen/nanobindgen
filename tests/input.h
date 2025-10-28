@@ -84,6 +84,16 @@ class Test
 class Test2
 {
   public:
+
+    /**
+     * Modified constructor
+     * 
+     * @param a p1
+     * @return nb::ref<Test2> 
+     * @nb new
+     */
+    static nb::ref<Test2> make(int a);
+
     /**
      * Get the name object
      *

@@ -162,6 +162,7 @@ class BindingType(Enum):
     PLAIN = auto()
     STATIC = auto()
     INIT = auto()
+    NEW = auto()
     OVERLOAD = auto()
     PROP_RO = auto()
     PROP_RW = auto()
@@ -228,6 +229,7 @@ def build_function(
         BindingType.PLAIN: "def",
         BindingType.STATIC: "def_static",
         BindingType.INIT: "def",
+        BindingType.NEW: "def",
         BindingType.OVERLOAD: "def",
         BindingType.PROP_RO: "def_prop_ro",
         BindingType.PROP_RW: "def_prop_rw",
@@ -250,6 +252,10 @@ def build_function(
     # .def(nb::init<const std::string &>())
     if function.binding_type == BindingType.INIT:
         return f'.{def_fn}(nb::init<{template_params}>(){params_text}, "{docstring}"{extra})'
+
+    # Custom constructors
+    if function.binding_type == BindingType.NEW:
+        return f'.{def_fn}(nb::new_({ref}){params_text}, "{docstring}"{extra})'
 
     # Overloads
     # .def("set", nb::overload_cast<int>(&Pet::set), "Set the pet's age")
@@ -275,7 +281,7 @@ func_doc_brief_query = DOXYGEN_LANGUAGE.query("""
 def parse_nb_dict(nb_dict: str) -> dict[str, str]:
     """Parse an @nb dict.
 
-    Format is * @nb key: value, key: value, ...
+    Format is * @nb key: value, key, key: 'valu,e', ...
 
     Args:
         nb_dict: The nb dict
@@ -283,15 +289,21 @@ def parse_nb_dict(nb_dict: str) -> dict[str, str]:
     Returns:
         parsed dictionary
     """
-    # Match a key-value pair of form key: value, key: value
+    # Match a key-value pair of form key1: value, key2, key3: value
     # , in value can be escaped with single quotes
 
-    nb_dict_pattern = r"(\w+):\s+((?:(?:'[^']*')|[^,])+)"
+    nb_dict_pattern = r"(\w+)(?::\s*((?:(?:'[^']*')|[^,])+))?"
 
     nb_dict_matches = re.findall(nb_dict_pattern, nb_dict)
-    nb_dict_parsed: Dict[str, str] = {
-        key: value.strip(" '") for key, value in nb_dict_matches
-    }
+
+    nb_dict_parsed: Dict[str, Optional[str]] = {}
+
+    for match in nb_dict_matches:
+        if len(match) == 2:
+            nb_dict_parsed[match[0]] = match[1].strip(" '")
+        else:
+            nb_dict_parsed[match[0]] = None
+
     return nb_dict_parsed
 
 
@@ -329,6 +341,9 @@ def build_functions(node: Node, class_name: Optional[str]) -> list[str]:
 
         if cpp_name == class_name:
             function.binding_type = BindingType.INIT
+
+        elif "new" in nb_dict_parsed:
+            function.binding_type = BindingType.NEW
 
         elif "name" in nb_dict_parsed:
             function.py_name = nb_dict_parsed["name"]
