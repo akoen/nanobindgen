@@ -2,10 +2,8 @@ from nanobindgen.parse import (
     extract_doc_from_comment,
     extract_tagset_from_comment,
     parse_cpp,
-    parse_doxygen,
     parse_header,
 )
-from nanobindgen.ir import TagSet
 
 
 def _comment_node(src: bytes):
@@ -452,7 +450,10 @@ enum class E
 };
 """
     h = parse_header("a.h", src)
-    assert [(v.cpp_name, v.value) for v in h.enums[0].values] == [("A", "1"), ("B", "2")]
+    assert [(v.cpp_name, v.value) for v in h.enums[0].values] == [
+        ("A", "1"),
+        ("B", "2"),
+    ]
 
 
 def test_parse_enum_value_docstrings():

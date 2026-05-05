@@ -1,4 +1,4 @@
-from nanobindgen.errors import NanobindgenError, ErrorCollector
+from nanobindgen.errors import ErrorCollector, NanobindgenError
 
 
 def test_error_formats_with_source_location():
@@ -29,10 +29,7 @@ def test_collector_format_summary():
     collector.error("a.h", 1, 1, "first")
     collector.error("a.h", 2, 1, "second")
     assert collector.format_summary() == (
-        "a.h:1:1: error: first\n"
-        "a.h:2:1: error: second\n"
-        "\n"
-        "2 errors generated."
+        "a.h:1:1: error: first\na.h:2:1: error: second\n\n2 errors generated."
     )
 
 

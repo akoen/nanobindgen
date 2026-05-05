@@ -11,6 +11,8 @@ TARGETS = frozenset({"class", "method", "free", "enum"})
 
 @dataclass(frozen=True)
 class Tag:
+    """Schema entry for a single @nb_* tag."""
+
     target: frozenset[str]
     arity: str  # "flag" | "once" | "repeatable"
     takes_value: bool = True
@@ -26,7 +28,9 @@ def _e(*tags: str) -> frozenset[str]:
 
 
 TAG_SCHEMA: dict[str, Tag] = {
-    "nb": Tag(target=_t("class", "method", "free", "enum"), arity="flag", takes_value=False),
+    "nb": Tag(
+        target=_t("class", "method", "free", "enum"), arity="flag", takes_value=False
+    ),
     "nb_name": Tag(
         target=_t("class", "method", "free", "enum"),
         arity="once",

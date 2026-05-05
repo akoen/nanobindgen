@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nanobindgen"
-version = "0.1.0"
+version = "0.2.0"
 description = "Automatically generate nanobind bindings."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/pycad-dev/nanobindgen"
+"Homepage" = "https://github.com/akoen/nanobindgen"
 
 [tool.setuptools.package-data]
 nanobindgen = ["*.so", "*.dylib"]
@@ -55,5 +55,10 @@ ignore = [
     "S607",
     "F403",    # Star imports
     "F405",    # Star imports
+    "PLR0912", # Too many branches
+    "SIM102",  # Collapsible nested if
 ]
 pydocstyle.convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D", "B008", "B017", "PLR0913", "E402", "FBT"]

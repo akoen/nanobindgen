@@ -1,15 +1,13 @@
 import pytest
+
 from nanobindgen.ir import (
-    SourceLoc,
-    Param,
-    DocIR,
-    TagSet,
-    MethodIR,
-    FreeFunctionIR,
     ClassIR,
-    EnumValueIR,
-    EnumIR,
+    DocIR,
     HeaderIR,
+    MethodIR,
+    Param,
+    SourceLoc,
+    TagSet,
 )
 
 

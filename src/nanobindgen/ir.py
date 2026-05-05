@@ -12,13 +12,17 @@ from types import MappingProxyType
 
 @dataclass(frozen=True, slots=True)
 class SourceLoc:
+    """1-based source location for diagnostics."""
+
     path: str
     line: int  # 1-based
-    col: int   # 1-based
+    col: int  # 1-based
 
 
 @dataclass(frozen=True, slots=True)
 class Param:
+    """A function or method parameter."""
+
     type: str
     name: str
     default: str | None  # raw C++ default expression, or None
@@ -26,6 +30,8 @@ class Param:
 
 @dataclass(frozen=True, slots=True)
 class DocIR:
+    """Doxygen-derived docstring components for one entity."""
+
     brief: str = ""
     detail: str = ""
     params: tuple[tuple[str, str], ...] = ()  # (name, description)
@@ -36,20 +42,26 @@ class DocIR:
 
 @dataclass(frozen=True, slots=True)
 class TagSet:
+    """Parsed @nb_* tags for one entity, classified by arity with source locations."""
+
     flags: frozenset[str] = frozenset()
-    values: Mapping[str, str] = field(default_factory=dict)              # once-arity tag -> body
-    repeats: Mapping[str, tuple[str, ...]] = field(default_factory=dict)  # repeatable tag -> bodies in source order
-    locations: Mapping[str, tuple[SourceLoc, ...]] = field(default_factory=dict)  # tag_name -> all occurrences in source order
+    values: Mapping[str, str] = field(default_factory=dict)  # once-arity tag -> body
+    repeats: Mapping[str, tuple[str, ...]] = field(
+        default_factory=dict
+    )  # repeatable tag -> bodies in source order
+    locations: Mapping[str, tuple[SourceLoc, ...]] = field(
+        default_factory=dict
+    )  # tag_name -> all occurrences in source order
 
     def __post_init__(self) -> None:
-        # Defensively wrap mapping inputs as read-only views so callers cannot
-        # mutate the IR after construction.
+        """Wrap mapping inputs as read-only views so the IR is genuinely immutable."""
         for attr in ("values", "repeats", "locations"):
             current = getattr(self, attr)
             if not isinstance(current, MappingProxyType):
                 object.__setattr__(self, attr, MappingProxyType(dict(current)))
 
     def has(self, name: str) -> bool:
+        """True if `name` appears as a flag, once-value, or repeatable."""
         return name in self.flags or name in self.values or name in self.repeats
 
     def get(self, name: str) -> str | None:
@@ -68,6 +80,8 @@ class TagSet:
 
 @dataclass(frozen=True, slots=True)
 class MethodIR:
+    """A class member function (instance, static, constructor, or factory)."""
+
     cpp_name: str
     loc: SourceLoc
     params: tuple[Param, ...]
@@ -78,6 +92,8 @@ class MethodIR:
 
 @dataclass(frozen=True, slots=True)
 class FreeFunctionIR:
+    """A non-member function declared at file scope."""
+
     cpp_name: str
     loc: SourceLoc
     params: tuple[Param, ...]
@@ -87,6 +103,8 @@ class FreeFunctionIR:
 
 @dataclass(frozen=True, slots=True)
 class ClassIR:
+    """A C++ class with its methods and binding tags."""
+
     cpp_name: str
     loc: SourceLoc
     tags: TagSet
@@ -96,6 +114,8 @@ class ClassIR:
 
 @dataclass(frozen=True, slots=True)
 class EnumValueIR:
+    """A single enumerator within an enum."""
+
     cpp_name: str
     value: str | None  # raw C++ value expression, or None
     doc: DocIR
@@ -104,6 +124,8 @@ class EnumValueIR:
 
 @dataclass(frozen=True, slots=True)
 class EnumIR:
+    """A C++ enum (typically `enum class`)."""
+
     cpp_name: str
     loc: SourceLoc
     tags: TagSet
@@ -113,6 +135,8 @@ class EnumIR:
 
 @dataclass(frozen=True, slots=True)
 class HeaderIR:
+    """Top-level IR for one parsed header file."""
+
     path: str
     classes: tuple[ClassIR, ...]
     free_functions: tuple[FreeFunctionIR, ...]

@@ -9,12 +9,20 @@ from .errors import NanobindgenError
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate nanobind bindings from C++ headers")
+    """Process headers passed on the command line; return a process exit code."""
+    parser = argparse.ArgumentParser(
+        description="Generate nanobind bindings from C++ headers"
+    )
     parser.add_argument(
-        "-o", "--output", type=str, required=True,
+        "-o",
+        "--output",
+        type=str,
+        required=True,
         help="directory where bind_<name>.h files will be written",
     )
-    parser.add_argument("files", metavar="F", type=str, nargs="+", help="header files to process")
+    parser.add_argument(
+        "files", metavar="F", type=str, nargs="+", help="header files to process"
+    )
     args = parser.parse_args()
 
     out_dir = Path(args.output.strip())

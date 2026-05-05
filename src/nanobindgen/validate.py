@@ -10,6 +10,7 @@ _SUGGESTION_CUTOFF = 0.6
 
 
 def validate(header: HeaderIR, collector: ErrorCollector) -> None:
+    """Run all tag-level and structural validation rules over a HeaderIR."""
     for cls in header.classes:
         _validate_entity(cls.tags, "class", collector)
         _validate_doc_overrides(cls, collector)
@@ -67,7 +68,9 @@ def _validate_entity(
             if scores and scores[0][0] >= _SUGGESTION_CUTOFF:
                 suggestion = f" — did you mean @{scores[0][1]}?"
             collector.error(
-                loc.path, loc.line, loc.col,
+                loc.path,
+                loc.line,
+                loc.col,
                 f"unknown tag @{name}{suggestion}",
             )
             continue
@@ -78,7 +81,9 @@ def _validate_entity(
         if kind not in schema.target:
             valid = ", ".join(sorted(schema.target))
             collector.error(
-                loc.path, loc.line, loc.col,
+                loc.path,
+                loc.line,
+                loc.col,
                 f"@{name} is not valid on {kind} (valid on {valid})",
             )
 
@@ -90,24 +95,32 @@ def _validate_entity(
         if schema.arity == "flag":
             if in_values or in_repeats:
                 collector.error(
-                    loc.path, loc.line, loc.col,
+                    loc.path,
+                    loc.line,
+                    loc.col,
                     f"@{name} does not take a value",
                 )
         elif schema.arity == "once":
             if in_flags:
                 collector.error(
-                    loc.path, loc.line, loc.col,
+                    loc.path,
+                    loc.line,
+                    loc.col,
                     f"@{name} requires a value",
                 )
             if in_repeats:
                 collector.error(
-                    loc.path, loc.line, loc.col,
+                    loc.path,
+                    loc.line,
+                    loc.col,
                     f"@{name} can only appear once",
                 )
         elif schema.arity == "repeatable":
             if in_flags:
                 collector.error(
-                    loc.path, loc.line, loc.col,
+                    loc.path,
+                    loc.line,
+                    loc.col,
                     f"@{name} requires a value",
                 )
 
@@ -116,7 +129,9 @@ def _validate_entity(
         for excluded in schema.excludes:
             if name < excluded and excluded in names:
                 collector.error(
-                    loc.path, loc.line, loc.col,
+                    loc.path,
+                    loc.line,
+                    loc.col,
                     f"@{name} and @{excluded} cannot both be set",
                 )
 
@@ -127,8 +142,11 @@ def _validate_entity(
                 continue
             loc = _loc(tags, name)
             collector.error(
-                loc.path, loc.line, loc.col,
-                f"@{name} found but @nb is missing — did you forget to mark this for binding?",
+                loc.path,
+                loc.line,
+                loc.col,
+                f"@{name} found but @nb is missing — "
+                "did you forget to mark this for binding?",
             )
             break  # one error per entity is enough
 
@@ -173,13 +191,17 @@ def _validate_property_pairing(cls: ClassIR, collector: ErrorCollector) -> None:
             role = "getter" if len(m.params) == 0 else "setter"
             other = "setter" if role == "getter" else "getter"
             collector.error(
-                loc.path, loc.line, loc.col,
+                loc.path,
+                loc.line,
+                loc.col,
                 f'@nb_prop_rw "{name}" has a {role} but no {other}',
             )
         elif len(methods) > 2:
             for m in methods[2:]:
                 collector.error(
-                    m.loc.path, m.loc.line, m.loc.col,
+                    m.loc.path,
+                    m.loc.line,
+                    m.loc.col,
                     f'@nb_prop_rw "{name}" has more than two methods',
                 )
 
@@ -199,7 +221,9 @@ def _validate_overload_consistency(cls: ClassIR, collector: ErrorCollector) -> N
         if len(kinds) > 1:
             for m in methods:
                 collector.error(
-                    m.loc.path, m.loc.line, m.loc.col,
+                    m.loc.path,
+                    m.loc.line,
+                    m.loc.col,
                     f"overload {py!r}: participants must share the same kind "
                     f"(got {sorted(kinds)})",
                 )
@@ -212,13 +236,19 @@ def _validate_param_docs(method_or_fn, collector: ErrorCollector) -> None:
 
     for name in sorted(doc_names - cpp_names):
         collector.warning(
-            loc.path, loc.line, loc.col,
-            f"@param '{name}' does not match any parameter in {method_or_fn.cpp_name!r}",
+            loc.path,
+            loc.line,
+            loc.col,
+            f"@param '{name}' does not match any parameter in "
+            f"{method_or_fn.cpp_name!r}",
         )
     for name in sorted(cpp_names - doc_names):
         collector.warning(
-            loc.path, loc.line, loc.col,
-            f"parameter '{name}' has no @param documentation in {method_or_fn.cpp_name!r}",
+            loc.path,
+            loc.line,
+            loc.col,
+            f"parameter '{name}' has no @param documentation in "
+            f"{method_or_fn.cpp_name!r}",
         )
 
 
@@ -229,7 +259,9 @@ def _validate_doc_overrides(method_or_fn_or_class, collector: ErrorCollector) ->
     if doc.override is not None and doc.brief:
         loc = method_or_fn_or_class.loc
         collector.warning(
-            loc.path, loc.line, loc.col,
+            loc.path,
+            loc.line,
+            loc.col,
             "@nb_doc is set; @brief is ignored",
         )
 
@@ -251,6 +283,8 @@ def _validate_extra_duplication(cls_or_enum, collector: ErrorCollector) -> None:
     for tag_name, hint in _DEDICATED_TAG_HINTS.items():
         if tag_name in flags and any(hint in e for e in extras):
             collector.warning(
-                loc.path, loc.line, loc.col,
+                loc.path,
+                loc.line,
+                loc.col,
                 f"@nb_extra contains {hint!r} which duplicates @{tag_name}",
             )

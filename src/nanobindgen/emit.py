@@ -19,6 +19,7 @@ def raw_string(s: str) -> str:
 
 
 def gen_docstring(doc: DocIR) -> str:
+    """Render a DocIR into a Google-style docstring (override short-circuits)."""
     if doc.override is not None:
         return doc.override
 
@@ -51,6 +52,7 @@ _CLASS_POLICY_FLAGS = (
 
 
 def emit_class_head(cls: ClassIR) -> str:
+    """Render the `nb::class_<T, Bases...>(m, "Py", ...)` head for one class."""
     py_name = cls.tags.get("nb_name") or cls.cpp_name
     bases = cls.tags.get_all("nb_inherit")
     template_args = ", ".join((cls.cpp_name, *bases))
@@ -118,7 +120,9 @@ def emit_method(method: MethodIR, class_name: str) -> str:
 
     if is_prop_ro or is_prop_rw:
         # Properties go through emit_property (Task 15) at the class-emit layer.
-        raise NotImplementedError("emit_method does not handle properties; see emit_property")
+        raise NotImplementedError(
+            "emit_method does not handle properties; see emit_property"
+        )
 
     py_name = _python_name(method)
     arg_specs = _format_param_args(method.params)
@@ -129,7 +133,8 @@ def emit_method(method: MethodIR, class_name: str) -> str:
         return f".def(nb::init<{template_params}>(){_join_args(arg_specs, extras)})"
 
     if is_new:
-        return f".def(nb::new_(&{class_name}::{method.cpp_name}){_join_args(arg_specs, extras)})"
+        ref = f"&{class_name}::{method.cpp_name}"
+        return f".def(nb::new_({ref}){_join_args(arg_specs, extras)})"
 
     def_fn = "def_static" if is_static else "def"
     ref = f"&{class_name}::{method.cpp_name}"
@@ -147,7 +152,7 @@ def emit_property(methods: list[MethodIR], class_name: str) -> str:
     """Emit a single .def_prop_ro/rw[_static] call from one or two methods."""
     is_rw = any("nb_prop_rw" in m.tags.values for m in methods)
     is_static = all("nb_static" in m.tags.flags or m.is_cpp_static for m in methods)
-    py_name = (methods[0].tags.get("nb_prop_ro") or methods[0].tags.get("nb_prop_rw"))
+    py_name = methods[0].tags.get("nb_prop_ro") or methods[0].tags.get("nb_prop_rw")
 
     suffix = "_static" if is_static else ""
     if is_rw:
@@ -187,6 +192,7 @@ def emit_overload(methods: list[MethodIR], class_name: str) -> list[str]:
 
 
 def emit_free_function(fn: FreeFunctionIR) -> str:
+    """Render an `m.def("py", &cpp, ...);` line for a free function."""
     py_name = fn.tags.values.get("nb_name", fn.cpp_name)
     arg_specs = _format_param_args(fn.params)
 
@@ -208,6 +214,7 @@ _ENUM_POLICY_FLAGS = (
 
 
 def emit_enum(enum: EnumIR) -> str:
+    """Render the full `nb::enum_<E>(m, "Py", ...).value(...)` block for an enum."""
     py_name = enum.tags.values.get("nb_name", enum.cpp_name)
     head_args: list[str] = ["m", f'"{py_name}"']
 
@@ -232,7 +239,7 @@ def emit_enum(enum: EnumIR) -> str:
 
 
 def _group_methods(cls: ClassIR) -> list[list[MethodIR]]:
-    """Group cls.methods into bind units in source order:
+    """Group cls.methods into bind units in source order.
 
     - One group per property pair (or singleton).
     - One group per overload set (≥2 methods sharing Python name and not props).
@@ -281,6 +288,7 @@ def _group_methods(cls: ClassIR) -> list[list[MethodIR]]:
 
 
 def emit_class(cls: ClassIR) -> str:
+    """Render a class head plus all of its grouped method/property/overload defs."""
     head = emit_class_head(cls)
     parts: list[str] = []
     for group in _group_methods(cls):
@@ -295,11 +303,10 @@ def emit_class(cls: ClassIR) -> str:
 
 
 def emit_header(header_name: str, header_ir: HeaderIR) -> str:
+    """Render the full bind_<name>(nb::module_ &m) translation unit as a string."""
     enum_blocks = [emit_enum(e) for e in header_ir.enums]
     class_blocks = [emit_class(c) for c in header_ir.classes]
-    free_blocks = [
-        f"{TAB}{emit_free_function(f)}" for f in header_ir.free_functions
-    ]
+    free_blocks = [f"{TAB}{emit_free_function(f)}" for f in header_ir.free_functions]
 
     enums_section = "\n\n".join(enum_blocks)
     classes_section = "\n\n".join(class_blocks)

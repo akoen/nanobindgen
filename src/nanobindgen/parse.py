@@ -4,7 +4,18 @@ import tree_sitter_cpp
 import tree_sitter_jsdoc
 from tree_sitter import Language, Node, Parser, Tree
 
-from .ir import ClassIR, DocIR, EnumIR, EnumValueIR, FreeFunctionIR, HeaderIR, MethodIR, Param, SourceLoc, TagSet
+from .ir import (
+    ClassIR,
+    DocIR,
+    EnumIR,
+    EnumValueIR,
+    FreeFunctionIR,
+    HeaderIR,
+    MethodIR,
+    Param,
+    SourceLoc,
+    TagSet,
+)
 from .tags import TAG_SCHEMA
 
 CPP_LANGUAGE = Language(tree_sitter_cpp.language(), "cpp")
@@ -18,10 +29,12 @@ _doxygen_parser.set_language(DOXYGEN_LANGUAGE)
 
 
 def parse_cpp(source: bytes) -> Tree:
+    """Parse C++ source bytes with the shared tree-sitter-cpp parser."""
     return _cpp_parser.parse(source)
 
 
 def parse_doxygen(comment_text: bytes) -> Tree:
+    """Parse Doxygen comment bytes with the shared tree-sitter-jsdoc parser."""
     return _doxygen_parser.parse(comment_text)
 
 
@@ -32,9 +45,9 @@ def _node_loc(node: Node, path: str) -> SourceLoc:
 
 
 def _strip_continuation_prefix(text: str) -> str:
-    """Strip leading ' * ' (Doxygen continuation marker) from each line.
+    r"""Strip leading ' * ' (Doxygen continuation marker) from each line.
 
-    Strips exactly: ^[ \\t]*\\* ?  — leading whitespace, one '*', optionally
+    Strips exactly: ^[ \t]*\* ?  — leading whitespace, one '*', optionally
     one space. Asterisks elsewhere in the text are preserved.
     """
     out_lines = []
@@ -203,6 +216,7 @@ _CLASS_QUERY = CPP_LANGUAGE.query(
 
 
 def parse_header(path: str, source: bytes) -> HeaderIR:
+    """Parse one C++ header into a HeaderIR (classes, free functions, enums)."""
     tree = parse_cpp(source)
     classes = _parse_classes(tree.root_node, path)
     free_functions = _parse_free_functions(tree.root_node, path)
@@ -269,9 +283,9 @@ _CONSTRUCTOR_QUERY = CPP_LANGUAGE.query(
 # Parameter query.
 # Type-side captures:
 #   @qual — optional `const` / `volatile` / `restrict` qualifier on the type.
-#   @type — the type name itself: `int`, `unsigned int`/`long long` (sized_type_specifier),
-#           `std::string` (qualified_identifier), `T` (type_identifier),
-#           `std::vector<int>` (template_type).
+#   @type — the type name itself: `int`, `unsigned int`/`long long`
+#           (sized_type_specifier), `std::string` (qualified_identifier),
+#           `T` (type_identifier), `std::vector<int>` (template_type).
 # Identifier-side captures:
 #   @ident — the parameter identifier, possibly wrapped in a reference or
 #            pointer declarator. The `&`/`*` is moved into the type by

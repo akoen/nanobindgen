@@ -2,8 +2,6 @@ from nanobindgen.errors import ErrorCollector
 from nanobindgen.ir import (
     ClassIR,
     DocIR,
-    EnumIR,
-    FreeFunctionIR,
     HeaderIR,
     MethodIR,
     Param,
@@ -57,7 +55,10 @@ def test_unknown_tag_errors_with_suggestion():
         "a.h",
         classes=(
             ClassIR(
-                "C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(),
+                "C",
+                SourceLoc("a.h", 1, 1),
+                _ts(flags={"nb"}),
+                DocIR(),
                 methods=(_empty_method(tags),),
             ),
         ),
@@ -67,7 +68,9 @@ def test_unknown_tag_errors_with_suggestion():
     collector = ErrorCollector()
     validate(h, collector)
     msgs = [e.message for e in collector.errors]
-    assert any("unknown tag @nb_prop_r" in m and "did you mean @nb_prop_ro" in m for m in msgs)
+    assert any(
+        "unknown tag @nb_prop_r" in m and "did you mean @nb_prop_ro" in m for m in msgs
+    )
 
 
 def test_wrong_target_errors():
@@ -77,7 +80,10 @@ def test_wrong_target_errors():
         "a.h",
         classes=(
             ClassIR(
-                "C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(),
+                "C",
+                SourceLoc("a.h", 1, 1),
+                _ts(flags={"nb"}),
+                DocIR(),
                 methods=(_empty_method(tags),),
             ),
         ),
@@ -86,7 +92,9 @@ def test_wrong_target_errors():
     )
     collector = ErrorCollector()
     validate(h, collector)
-    assert any("@nb_inherit is not valid on method" in e.message for e in collector.errors)
+    assert any(
+        "@nb_inherit is not valid on method" in e.message for e in collector.errors
+    )
 
 
 def test_arity_violation_flag_with_body():
@@ -96,7 +104,10 @@ def test_arity_violation_flag_with_body():
         "a.h",
         classes=(
             ClassIR(
-                "C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(),
+                "C",
+                SourceLoc("a.h", 1, 1),
+                _ts(flags={"nb"}),
+                DocIR(),
                 methods=(_empty_method(tags),),
             ),
         ),
@@ -105,7 +116,9 @@ def test_arity_violation_flag_with_body():
     )
     collector = ErrorCollector()
     validate(h, collector)
-    assert any("@nb_static does not take a value" in e.message for e in collector.errors)
+    assert any(
+        "@nb_static does not take a value" in e.message for e in collector.errors
+    )
 
 
 def test_mutual_exclusion():
@@ -114,7 +127,10 @@ def test_mutual_exclusion():
         "a.h",
         classes=(
             ClassIR(
-                "C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(),
+                "C",
+                SourceLoc("a.h", 1, 1),
+                _ts(flags={"nb"}),
+                DocIR(),
                 methods=(_empty_method(tags, name="C"),),
             ),
         ),
@@ -137,7 +153,10 @@ def test_required_body_missing():
         "a.h",
         classes=(
             ClassIR(
-                "C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(),
+                "C",
+                SourceLoc("a.h", 1, 1),
+                _ts(flags={"nb"}),
+                DocIR(),
                 methods=(_empty_method(tags),),
             ),
         ),
@@ -155,7 +174,10 @@ def test_bind_marker_without_nb_errors():
         "a.h",
         classes=(
             ClassIR(
-                "C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(),
+                "C",
+                SourceLoc("a.h", 1, 1),
+                _ts(flags={"nb"}),
+                DocIR(),
                 methods=(_empty_method(tags),),
             ),
         ),
@@ -176,49 +198,76 @@ def test_property_rw_unpaired_setter_or_getter_errors():
     h = HeaderIR(
         "a.h",
         classes=(
-            ClassIR("C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(),
-                    methods=(m1,)),
+            ClassIR(
+                "C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(), methods=(m1,)
+            ),
         ),
         free_functions=(),
         enums=(),
     )
     collector = ErrorCollector()
     validate(h, collector)
-    assert any('@nb_prop_rw "name" has a getter but no setter' in e.message
-               or '@nb_prop_rw "name" has a setter but no getter' in e.message
-               for e in collector.errors)
+    assert any(
+        '@nb_prop_rw "name" has a getter but no setter' in e.message
+        or '@nb_prop_rw "name" has a setter but no getter' in e.message
+        for e in collector.errors
+    )
 
 
 def test_overload_kind_mismatch_errors():
     # Two methods sharing a Python name, one static, one not -> error.
     tags_a = _ts(flags={"nb"})
     tags_b = _ts(flags={"nb", "nb_static"})
-    m_a = MethodIR("foo", SourceLoc("a.h", 2, 1), (Param("int", "x", None),), False, tags_a, DocIR())
-    m_b = MethodIR("foo", SourceLoc("a.h", 5, 1), (Param("double", "y", None),), True, tags_b, DocIR())
+    m_a = MethodIR(
+        "foo",
+        SourceLoc("a.h", 2, 1),
+        (Param("int", "x", None),),
+        False,
+        tags_a,
+        DocIR(),
+    )
+    m_b = MethodIR(
+        "foo",
+        SourceLoc("a.h", 5, 1),
+        (Param("double", "y", None),),
+        True,
+        tags_b,
+        DocIR(),
+    )
     h = HeaderIR(
         "a.h",
         classes=(
-            ClassIR("C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(),
-                    methods=(m_a, m_b)),
+            ClassIR(
+                "C",
+                SourceLoc("a.h", 1, 1),
+                _ts(flags={"nb"}),
+                DocIR(),
+                methods=(m_a, m_b),
+            ),
         ),
         free_functions=(),
         enums=(),
     )
     collector = ErrorCollector()
     validate(h, collector)
-    assert any("overload" in e.message and "kind" in e.message for e in collector.errors)
+    assert any(
+        "overload" in e.message and "kind" in e.message for e in collector.errors
+    )
 
 
 def test_param_doc_mismatch_warns():
     # @param documents 'q' but signature has 'x' -> warning.
     tags = _ts(flags={"nb"})
     doc = DocIR(params=(("q", "wrong name"),))
-    m = MethodIR("foo", SourceLoc("a.h", 2, 1), (Param("int", "x", None),), False, tags, doc)
+    m = MethodIR(
+        "foo", SourceLoc("a.h", 2, 1), (Param("int", "x", None),), False, tags, doc
+    )
     h = HeaderIR(
         "a.h",
         classes=(
-            ClassIR("C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(),
-                    methods=(m,)),
+            ClassIR(
+                "C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(), methods=(m,)
+            ),
         ),
         free_functions=(),
         enums=(),
@@ -236,15 +285,18 @@ def test_nb_doc_with_brief_warns():
     h = HeaderIR(
         "a.h",
         classes=(
-            ClassIR("C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(),
-                    methods=(m,)),
+            ClassIR(
+                "C", SourceLoc("a.h", 1, 1), _ts(flags={"nb"}), DocIR(), methods=(m,)
+            ),
         ),
         free_functions=(),
         enums=(),
     )
     collector = ErrorCollector()
     validate(h, collector)
-    assert any("@nb_doc is set; @brief is ignored" in w.message for w in collector.warnings)
+    assert any(
+        "@nb_doc is set; @brief is ignored" in w.message for w in collector.warnings
+    )
 
 
 def test_extra_with_dedicated_intrusive_ptr_warns():
@@ -262,15 +314,17 @@ def test_extra_with_dedicated_intrusive_ptr_warns():
     )
     collector = ErrorCollector()
     validate(h, collector)
-    assert any("nb::intrusive_ptr" in w.message and "nb_intrusive_ptr" in w.message
-               for w in collector.warnings)
+    assert any(
+        "nb::intrusive_ptr" in w.message and "nb_intrusive_ptr" in w.message
+        for w in collector.warnings
+    )
 
 
 from pathlib import Path
 
 import pytest
-import nanobindgen
 
+import nanobindgen
 
 FIXTURE_DIR = Path(__file__).parent.parent / "fixtures" / "errors"
 

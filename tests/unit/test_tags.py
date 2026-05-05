@@ -1,5 +1,4 @@
-import pytest
-from nanobindgen.tags import Tag, TAG_SCHEMA, TARGETS
+from nanobindgen.tags import TAG_SCHEMA, TARGETS
 
 
 def test_every_tag_has_non_empty_target():

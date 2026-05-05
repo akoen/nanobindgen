@@ -1,26 +1,26 @@
 from nanobindgen.emit import (
     emit_class,
     emit_class_head,
-    emit_method,
-    emit_property,
-    emit_overload,
-    emit_free_function,
     emit_enum,
+    emit_free_function,
     emit_header,
+    emit_method,
+    emit_overload,
+    emit_property,
     gen_docstring,
     raw_string,
 )
 from nanobindgen.ir import (
     ClassIR,
     DocIR,
-    MethodIR,
-    Param,
-    SourceLoc,
-    TagSet,
     EnumIR,
     EnumValueIR,
     FreeFunctionIR,
     HeaderIR,
+    MethodIR,
+    Param,
+    SourceLoc,
+    TagSet,
 )
 
 
@@ -111,8 +111,8 @@ def test_emit_class_head_with_intrusive_ptr():
     out = emit_class_head(_cls(tags))
     assert out == (
         'nb::class_<Foo>(m, "Foo", '
-        'nb::intrusive_ptr<Foo>([](Foo* o, PyObject* po) noexcept '
-        '{ o->set_self_py(po); }))'
+        "nb::intrusive_ptr<Foo>([](Foo* o, PyObject* po) noexcept "
+        "{ o->set_self_py(po); }))"
     )
 
 
@@ -127,7 +127,7 @@ def test_emit_class_head_with_policy_flags():
 def test_emit_class_head_with_extras():
     tags = TagSet(
         flags=frozenset({"nb"}),
-        repeats={"nb_extra": ("nb::sig(\"sig\")", "nb::raw_doc(\"d\")")},
+        repeats={"nb_extra": ('nb::sig("sig")', 'nb::raw_doc("d")')},
     )
     out = emit_class_head(_cls(tags))
     assert 'nb::sig("sig")' in out
@@ -155,7 +155,11 @@ def _method(
         loc=SourceLoc("a.h", 2, 1),
         params=params,
         is_cpp_static=is_cpp_static,
-        tags=TagSet(flags=flags, values=values or {}, repeats={k: tuple(v) for k, v in (repeats or {}).items()}),
+        tags=TagSet(
+            flags=flags,
+            values=values or {},
+            repeats={k: tuple(v) for k, v in (repeats or {}).items()},
+        ),
         doc=doc,
     )
 
@@ -191,13 +195,21 @@ def test_emit_init_via_method_name_match():
 
 
 def test_emit_init_via_explicit_tag():
-    m = _method(cpp_name="ctor", flags=frozenset({"nb", "nb_init"}), params=(Param("int", "x", None),))
+    m = _method(
+        cpp_name="ctor",
+        flags=frozenset({"nb", "nb_init"}),
+        params=(Param("int", "x", None),),
+    )
     out = emit_method(m, class_name="C")
     assert out == '.def(nb::init<int>(), "x"_a)'
 
 
 def test_emit_new_factory():
-    m = _method(cpp_name="make", params=(Param("int", "x", None),), flags=frozenset({"nb", "nb_new"}))
+    m = _method(
+        cpp_name="make",
+        params=(Param("int", "x", None),),
+        flags=frozenset({"nb", "nb_new"}),
+    )
     out = emit_method(m, class_name="C")
     assert out == '.def(nb::new_(&C::make), "x"_a)'
 
@@ -226,8 +238,6 @@ def test_emit_method_with_sig():
     assert 'nb::sig("(self, x: int) -> None")' in out
 
 
-
-
 def test_emit_prop_ro():
     m = _method(cpp_name="get_name", values={"nb_prop_ro": "name"})
     out = emit_property([m], class_name="C")
@@ -235,7 +245,11 @@ def test_emit_prop_ro():
 
 
 def test_emit_prop_ro_static():
-    m = _method(cpp_name="get_kind", values={"nb_prop_ro": "kind"}, flags=frozenset({"nb", "nb_static"}))
+    m = _method(
+        cpp_name="get_kind",
+        values={"nb_prop_ro": "kind"},
+        flags=frozenset({"nb", "nb_static"}),
+    )
     out = emit_property([m], class_name="C")
     assert out == '.def_prop_ro_static("kind", &C::get_kind)'
 
@@ -252,7 +266,9 @@ def test_emit_prop_rw():
 
 
 def test_emit_prop_rw_with_docstring_from_getter():
-    g = _method(cpp_name="get_name", values={"nb_prop_rw": "name"}, doc=DocIR(brief="Name."))
+    g = _method(
+        cpp_name="get_name", values={"nb_prop_rw": "name"}, doc=DocIR(brief="Name.")
+    )
     s = _method(
         cpp_name="set_name",
         values={"nb_prop_rw": "name"},
@@ -270,8 +286,6 @@ def test_emit_overload():
         '.def("foo", nb::overload_cast<int>(&C::foo), "x"_a)',
         '.def("foo", nb::overload_cast<double>(&C::foo), "y"_a)',
     ]
-
-
 
 
 def test_emit_free_function():
@@ -325,9 +339,7 @@ def test_emit_enum_with_value_docstrings():
         loc=SourceLoc("a.h", 1, 1),
         tags=TagSet(flags=frozenset({"nb"})),
         doc=DocIR(),
-        values=(
-            EnumValueIR("A", None, DocIR(brief="The A."), SourceLoc("a.h", 2, 1)),
-        ),
+        values=(EnumValueIR("A", None, DocIR(brief="The A."), SourceLoc("a.h", 2, 1)),),
     )
     out = emit_enum(e)
     assert '.value("A", C::A, R"nbdoc(The A.)nbdoc")' in out
@@ -355,8 +367,11 @@ def test_emit_class_groups_property_pair():
         params=(Param("std::string", "v", None),),
     )
     cls = ClassIR(
-        cpp_name="C", loc=SourceLoc("a.h", 1, 1),
-        tags=TagSet(flags=frozenset({"nb"})), doc=DocIR(), methods=(g, s),
+        cpp_name="C",
+        loc=SourceLoc("a.h", 1, 1),
+        tags=TagSet(flags=frozenset({"nb"})),
+        doc=DocIR(),
+        methods=(g, s),
     )
     out = emit_class(cls)
     assert '.def_prop_rw("name", &C::get_name, &C::set_name)' in out
@@ -367,8 +382,11 @@ def test_emit_class_groups_overloads():
     a = _method(cpp_name="foo", params=(Param("int", "x", None),))
     b = _method(cpp_name="foo", params=(Param("double", "y", None),))
     cls = ClassIR(
-        cpp_name="C", loc=SourceLoc("a.h", 1, 1),
-        tags=TagSet(flags=frozenset({"nb"})), doc=DocIR(), methods=(a, b),
+        cpp_name="C",
+        loc=SourceLoc("a.h", 1, 1),
+        tags=TagSet(flags=frozenset({"nb"})),
+        doc=DocIR(),
+        methods=(a, b),
     )
     out = emit_class(cls)
     assert "nb::overload_cast<int>" in out
@@ -377,16 +395,24 @@ def test_emit_class_groups_overloads():
 
 def test_emit_header_combines_classes_enums_free_functions():
     cls = ClassIR(
-        cpp_name="C", loc=SourceLoc("a.h", 1, 1),
-        tags=TagSet(flags=frozenset({"nb"})), doc=DocIR(), methods=(),
+        cpp_name="C",
+        loc=SourceLoc("a.h", 1, 1),
+        tags=TagSet(flags=frozenset({"nb"})),
+        doc=DocIR(),
+        methods=(),
     )
     fn = FreeFunctionIR(
-        cpp_name="foo", loc=SourceLoc("a.h", 1, 1), params=(),
-        tags=TagSet(flags=frozenset({"nb"})), doc=DocIR(),
+        cpp_name="foo",
+        loc=SourceLoc("a.h", 1, 1),
+        params=(),
+        tags=TagSet(flags=frozenset({"nb"})),
+        doc=DocIR(),
     )
     enum = EnumIR(
-        cpp_name="E", loc=SourceLoc("a.h", 1, 1),
-        tags=TagSet(flags=frozenset({"nb"})), doc=DocIR(),
+        cpp_name="E",
+        loc=SourceLoc("a.h", 1, 1),
+        tags=TagSet(flags=frozenset({"nb"})),
+        doc=DocIR(),
         values=(EnumValueIR("X", None, DocIR(), SourceLoc("a.h", 2, 1)),),
     )
     h = HeaderIR("a.h", classes=(cls,), free_functions=(fn,), enums=(enum,))
@@ -403,8 +429,11 @@ def test_emit_class_overloaded_constructors_use_init():
     a = _method(cpp_name="C", params=())
     b = _method(cpp_name="C", params=(Param("int", "x", None),))
     cls = ClassIR(
-        cpp_name="C", loc=SourceLoc("a.h", 1, 1),
-        tags=TagSet(flags=frozenset({"nb"})), doc=DocIR(), methods=(a, b),
+        cpp_name="C",
+        loc=SourceLoc("a.h", 1, 1),
+        tags=TagSet(flags=frozenset({"nb"})),
+        doc=DocIR(),
+        methods=(a, b),
     )
     out = emit_class(cls)
     assert ".def(nb::init<>())" in out
