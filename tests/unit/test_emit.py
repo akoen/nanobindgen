@@ -397,3 +397,16 @@ def test_emit_header_combines_classes_enums_free_functions():
     assert "nb::class_<C>" in out
     assert "nb::enum_<E>" in out
     assert 'm.def("foo"' in out
+
+
+def test_emit_class_overloaded_constructors_use_init():
+    a = _method(cpp_name="C", params=())
+    b = _method(cpp_name="C", params=(Param("int", "x", None),))
+    cls = ClassIR(
+        cpp_name="C", loc=SourceLoc("a.h", 1, 1),
+        tags=TagSet(flags=frozenset({"nb"})), doc=DocIR(), methods=(a, b),
+    )
+    out = emit_class(cls)
+    assert ".def(nb::init<>())" in out
+    assert '.def(nb::init<int>(), "x"_a)' in out
+    assert "nb::overload_cast" not in out

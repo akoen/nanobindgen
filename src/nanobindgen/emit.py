@@ -286,10 +286,10 @@ def emit_class(cls: ClassIR) -> str:
     for group in _group_methods(cls):
         if "nb_prop_ro" in group[0].tags.values or "nb_prop_rw" in group[0].tags.values:
             parts.append(emit_property(group, cls.cpp_name))
-        elif len(group) >= 2:
+        elif len(group) >= 2 and not all(_is_init(m, cls.cpp_name) for m in group):
             parts.extend(emit_overload(group, cls.cpp_name))
         else:
-            parts.append(emit_method(group[0], cls.cpp_name))
+            parts.extend(emit_method(m, cls.cpp_name) for m in group)
     body = "".join(f"\n{TAB}{TAB}{p}" for p in parts)
     return f"{TAB}{head}{body};"
 

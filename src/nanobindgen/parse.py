@@ -223,7 +223,7 @@ def _parse_classes(root: Node, path: str) -> tuple[ClassIR, ...]:
         body_node = captures["body"]
 
         tags = extract_tagset_from_comment(comment, path)
-        if "nb" not in tags.flags:
+        if not tags.locations:
             continue
 
         doc = extract_doc_from_comment(comment)

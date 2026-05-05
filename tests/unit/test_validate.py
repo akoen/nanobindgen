@@ -264,3 +264,31 @@ def test_extra_with_dedicated_intrusive_ptr_warns():
     validate(h, collector)
     assert any("nb::intrusive_ptr" in w.message and "nb_intrusive_ptr" in w.message
                for w in collector.warnings)
+
+
+from pathlib import Path
+
+import pytest
+import nanobindgen
+
+
+FIXTURE_DIR = Path(__file__).parent.parent / "fixtures" / "errors"
+
+
+@pytest.mark.parametrize(
+    "fixture_name,expected_substring",
+    [
+        ("unknown_tag.h", "unknown tag @nb_prop_r"),
+        ("wrong_target.h", "@nb_inherit is not valid on method"),
+        ("arity_violation.h", "@nb_static does not take a value"),
+        ("mutual_exclusion.h", "cannot both be set"),
+        ("required_body.h", "@nb_name requires a value"),
+        ("bind_marker_missing.h", "@nb_name found but @nb is missing"),
+        ("prop_unpaired.h", '@nb_prop_rw "name"'),
+    ],
+)
+def test_fixture_produces_expected_error(fixture_name, expected_substring):
+    source = (FIXTURE_DIR / fixture_name).read_text()
+    with pytest.raises(nanobindgen.NanobindgenError) as exc_info:
+        nanobindgen.build_header(fixture_name.replace(".h", ""), source)
+    assert expected_substring in str(exc_info.value)
